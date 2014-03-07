@@ -53,6 +53,7 @@ tests_require = [
     'python-memcached',
     'pytest',
     'mako',
+    'cherrypy'
     #'pytest-coverage',
 ]
 
