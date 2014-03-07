@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: pysaml2
+Version: 1.2.0p3
+Summary: Python implementation of SAML Version 2 to be used in a WSGI environment
+Home-page: https://github.com/rohe/pysaml2
+Author: Roland Hedberg
+Author-email: roland.hedberg@adm.umu.se
+License: Apache 2.0
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Topic :: Software Development :: Libraries :: Python Modules

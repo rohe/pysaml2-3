@@ -1,0 +1,12 @@
+2013-06-12 14:04:15,839 -- repoze.who request started (/) --
+2013-06-12 14:04:15,839 request classification: browser
+2013-06-12 14:04:15,839 identifier plugins registered [<SAML2Plugin 4324781584>, <AuthTktCookiePlugin 4315334736>]
+2013-06-12 14:04:15,839 identifier plugins matched for classification "browser": [<SAML2Plugin 4324781584>, <AuthTktCookiePlugin 4315334736>]
+2013-06-12 14:04:15,839 authenticator plugins registered [<SAML2Plugin 4324781584>]
+2013-06-12 14:04:15,839 authenticator plugins matched for classification "browser": [<SAML2Plugin 4324781584>]
+2013-06-12 14:04:15,839 challenge required
+2013-06-12 14:04:15,839 challengers registered: [<SAML2Plugin 4324781584>]
+2013-06-12 14:04:15,839 challengers matched for classification "browser": [<SAML2Plugin 4324781584>]
+2013-06-12 14:04:15,841 challenger plugin <SAML2Plugin 4324781584> "challenge" returned an app
+2013-06-12 14:04:15,841 executing challenge app
+2013-06-12 14:04:15,841 -- repoze.who request ended (/) --

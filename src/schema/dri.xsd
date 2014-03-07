@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<schema xmlns:dri="urn:oasis:names:tc:SAML:2.0:metadata:dri" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:oasis:names:tc:SAML:2.0:metadata:dri" elementFormDefault="unqualified" attributeFormDefault="unqualified" blockDefault="substitution" version="2.0">
+  <import namespace="urn:oasis:names:tc:SAML:2.0:assertion" schemaLocation="saml-schema-metadata-2.0.xsd"/>
+  <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="http://www.w3.org/2001/xml.xsd"/>
+  <annotation>
+    <documentation>
+      Document identifier: TODO
+            Location: TODO
+            Revision history: TODO
+    </documentation>
+  </annotation>
+  <element name="DocumentInfo" type="dri:DocumentInfoType"/>
+  <complexType name="DocumentInfoType">
+    <sequence>
+      <element ref="dri:CreationInstant" minOccurs="0"/>
+      <element ref="dri:SerialNumber" minOccurs="0"/>
+      <element ref="dri:UsagePolicy" minOccurs="0"/>
+      <element ref="dri:Publishers" minOccurs="0"/>
+    </sequence>
+  </complexType>
+  <element name="CreationInstant" type="datetime"/>
+  <element name="SerialNumber" type="string"/>
+  <element name="UsagePolicy" type="anyURI"/>
+  <element name="Publishers" type="dri:PublishersType"/>
+  <complexType name="PublishersType">
+    <sequence>
+      <element ref="dri:Publisher" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+  <element name="Publisher" type="dri:PublisherType"/>
+  <complexType name="PublisherType">
+    <attribute name="PublisherID" type="md:entityIDType" use="required"/>
+    <attribute name="CreationInstant" type="datetime"/>
+    <attribute name="SerialNumber" type="string"/>
+  </complexType>
+  <element name="RegistrationInfo" type="dri:RegistrationInfoType"/>
+  <complexType name="RegistrationInfoType">
+    <sequence>
+      <element ref="dri:RegistrationAuthority"/>
+      <element ref="dri:RegistrationInstant"/>
+      <element ref="dri:RegistrationPolicy" minOccurs="0"/>
+    </sequence>
+  </complexType>
+  <element name="RegistrationAuthority" type="md:entityIDType"/>
+  <element name="RegistrationInstant" type="datetime"/>
+  <element name="RegistrationPolicy" type="anyURI"/>
+</schema>

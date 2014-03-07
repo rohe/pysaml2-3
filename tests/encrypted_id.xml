@@ -1,0 +1,70 @@
+<saml:EncryptedID>
+    <xenc:EncryptedData>
+        <xenc:EncryptionMethod Algorithm="http://www.example.com/">Any text, intermingled with:
+            <xenc:KeySize>1</xenc:KeySize>
+            <xenc:OAEPparams>GpM7</xenc:OAEPparams>
+            <!--any element-->
+        </xenc:EncryptionMethod>
+        <ds:KeyInfo>Any text, intermingled with:
+            <ds:KeyName>string</ds:KeyName>
+        </ds:KeyInfo>
+        <xenc:CipherData>
+            <xenc:CipherValue>GpM7</xenc:CipherValue>
+        </xenc:CipherData>
+        <xenc:EncryptionProperties>
+            <xenc:EncryptionProperty>Any text, intermingled with:...
+            </xenc:EncryptionProperty>
+        </xenc:EncryptionProperties>
+    </xenc:EncryptedData>
+    <xenc:EncryptedKey>
+        <xenc:EncryptionMethod Algorithm="http://www.example.com/">Any text, intermingled with:
+            <xenc:KeySize>1</xenc:KeySize>
+            <xenc:OAEPparams>GpM7</xenc:OAEPparams>
+            <!--any element-->
+        </xenc:EncryptionMethod>
+        <ds:KeyInfo>Any text, intermingled with:
+            <ds:KeyName>string</ds:KeyName>
+        </ds:KeyInfo>
+        <xenc:CipherData>
+            <xenc:CipherValue>GpM7</xenc:CipherValue>
+        </xenc:CipherData>
+        <xenc:EncryptionProperties>
+            <xenc:EncryptionProperty>Any text, intermingled with:...
+            </xenc:EncryptionProperty>
+        </xenc:EncryptionProperties>
+        <xenc:ReferenceList>
+            <xenc:DataReference URI="http://www.example.com/">
+                <!--any element-->
+            </xenc:DataReference>
+        </xenc:ReferenceList>
+        <xenc:CarriedKeyName>string</xenc:CarriedKeyName>
+    </xenc:EncryptedKey>
+</saml:EncryptedID>
+
+<saml:EncryptedID>
+<xenc:EncryptedData Type="http://www.w3.org/2001/04/xmlenc#Element"
+                    xmlns:xenc="http://www.w3.org/2001/04/xmlenc#">
+    <xenc:EncryptionMethod
+            Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/>
+    <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <xenc:EncryptedKey xmlns:xenc="http://www.w3.org/2001/04/xmlenc#">
+            <xenc:EncryptionMethod
+                    Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-1_5"/>
+            <xenc:CipherData>
+                <xenc:CipherValue>
+                    l0m1ZgTsRwTALrrsowhyMpvBuaaPGG5qKvbn3bbuOIAcqpbMfJRuHrK2ip6pDK8l7zDheLtgf2NL
+                    9c1gZXzCDZzOoA44Pg773SOcbpiimrFa0m8pn7+V6x9R3RjM/igdeDOPt5ROYMmyhD23V8GP0OWy
+                    R/1e4QO53p3Cvvvw3Vc=
+                </xenc:CipherValue>
+            </xenc:CipherData>
+        </xenc:EncryptedKey>
+    </ds:KeyInfo>
+    <xenc:CipherData>
+        <xenc:CipherValue>
+            dHdNAFtydG3ixf5vshA394cJNL4LY+59mxL/IASwqC7BoOe5Fi3twGCOsnipJUpJW/v1dV34Cwtl
+            WoRuDoJlrZT6qLC6zJKU4TkHPxUfqnC2p4OTlkefUSQVcjhQ4pcNl0dYNr5wXeNh0EcE8/ung+K+
+            OLQl8Vl5c/LtI141S09J5248RHMw0lKqdZjKKFc0souCNP6k9dZu9qHXQ7fa4Q==
+        </xenc:CipherValue>
+    </xenc:CipherData>
+</xenc:EncryptedData>
+</saml:EncryptedID>

@@ -1,0 +1,14 @@
+decorator
+requests >= 1.0.0
+paste
+zope.interface
+repoze.who
+pycrypto
+
+[testing]
+mongodict
+pyasn1
+pymongo
+python-memcached
+pytest
+mako

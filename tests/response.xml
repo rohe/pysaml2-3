@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ns0:Envelope xmlns:ns0="http://schemas.xmlsoap.org/soap/envelope/">
+    <ns0:Body><?xml version="1.0" encoding="UTF-8"?>
+        <ns0:LogoutRequest xmlns:ns0="urn:oasis:names:tc:SAML:2.0:protocol"
+                           xmlns:ns1="urn:oasis:names:tc:SAML:2.0:assertion"
+                           xmlns:ns2="http://www.w3.org/2000/09/xmldsig#"
+                           Destination="http://localhost:8088/slo"
+                           ID="id-a97d063538ff0cae3b99dd60dccd7627"
+                           IssueInstant="2012-12-20T10:01:36Z"
+                           NotOnOrAfter="2012-12-20T10:06:35Z" Reason="Tired"
+                           Version="2.0">
+            <ns1:Issuer
+                    Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">
+                urn:mace:example.com:saml:roland:sp
+            </ns1:Issuer>
+            <ns2:Signature Id="Signature1">
+                <ns2:SignedInfo>
+                    <ns2:CanonicalizationMethod
+                            Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                    <ns2:SignatureMethod
+                            Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+                    <ns2:Reference URI="#id-a97d063538ff0cae3b99dd60dccd7627">
+                        <ns2:Transforms>
+                            <ns2:Transform
+                                    Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                            <ns2:Transform
+                                    Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                        </ns2:Transforms>
+                        <ns2:DigestMethod
+                                Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+                        <ns2:DigestValue>TnFXFXN2rcS4csuCj9MgVPXdAy8=
+                        </ns2:DigestValue>
+                    </ns2:Reference>
+                </ns2:SignedInfo>
+                <ns2:SignatureValue>
+                    xfa9ydVPpaLcnUoyhKgJ6raZxKddvjxUwHx8y/PbQdHL9avGLfhgbd8ne+eG5RJt
+                    hNf4ZhSofaXk9ciYwRrN3FWyoDrKhEGyw03eoYoeOnPHwDAu4HEXdQ2s6dh7XGc1
+                    G2khMTnLS38hSPRKBGth/fwd89P5O97zH5OdN+yyTsw=
+                </ns2:SignatureValue>
+                <ns2:KeyInfo>
+                    <ns2:X509Data>
+                        <ns2:X509Certificate>
+                            MIICsDCCAhmgAwIBAgIJAJrzqSSwmDY9MA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMDkxMDA2MTk0OTQxWhcNMDkxMTA1MTk0OTQxWjBFMQswCQYDVQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDJg2cms7MqjniT8Fi/XkNHZNPbNVQyMUMXE9tXOdqwYCA1cc8vQdzkihscQMXy3iPw2cMggBu6gjMTOSOxECkuvX5ZCclKr8pXAJM5cY6gVOaVO2PdTZcvDBKGbiaNefiEw5hnoZomqZGp8wHNLAUkwtH9vjqqvxyS/vclc6k2ewIDAQABo4GnMIGkMB0GA1UdDgQWBBRePsKHKYJsiojE78ZWXccK9K4aJTB1BgNVHSMEbjBsgBRePsKHKYJsiojE78ZWXccK9K4aJaFJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBAoTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAJrzqSSwmDY9MAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEAJSrKOEzHO7TL5cy6h3qh+3+JAk8HbGBW+cbX6KBCAw/mzU8flK25vnWwXS3dv2FF3Aod0/S7AWNfKib5U/SA9nJaz/mWeF9S0farz9AQFc8/NSzAzaVq7YbM4F6f6N2FRl7GikdXRCed45j6mrPzGzk3ECbupFnqyREH3+ZPSdk=
+                        </ns2:X509Certificate>
+                    </ns2:X509Data>
+                </ns2:KeyInfo>
+            </ns2:Signature>
+            <ns1:NameID>123456</ns1:NameID>
+        </ns0:LogoutRequest>
+    </ns0:Body>
+</ns0:Envelope>
