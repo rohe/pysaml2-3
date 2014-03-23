@@ -63,7 +63,7 @@ tests_require = [
 
 
 setup(
-    name='pysaml2',
+    name='pysaml3',
     version='2.0.0beta',
     description='Python3 implementation of SAML Version 2',
     # long_description = read("README"),
