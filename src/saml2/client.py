@@ -41,12 +41,6 @@ from saml2.client_base import LogoutError
 from saml2.client_base import NoServiceDefined
 from saml2.mdstore import destinations
 
-try:
-    from urllib.parse import parse_qs
-except ImportError:
-    # Compatibility with Python <= 2.5
-    from cgi import parse_qs
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -79,16 +73,17 @@ class Saml2Client(Base):
 
         destination = self._sso_location(entityid, binding)
 
-        req = self.create_authn_request(destination, vorg, scoping,
+        reqid, req = self.create_authn_request(destination, vorg, scoping,
                                         response_binding, nameid_format,
-                                        consent, extensions, sign, **kwargs)
+                                        consent=consent, extensions=extensions,
+                                        sign=sign, **kwargs)
         _req_str = "%s" % req
 
         logger.info("AuthNReq: %s" % _req_str)
 
         info = self.apply_binding(binding, _req_str, destination, relay_state)
 
-        return req.id, info
+        return reqid, info
 
     def global_logout(self, name_id, reason="", expire=None, sign=None):
         """ More or less a layer of indirection :-/
@@ -155,10 +150,9 @@ class Saml2Client(Base):
 
                 destination = destinations(srvs)[0]
                 logger.info("destination to provider: %s" % destination)
-                request = self.create_logout_request(destination, entity_id,
-                                                     name_id=name_id,
-                                                     reason=reason,
-                                                     expire=expire)
+                req_id, request = self.create_logout_request(
+                    destination, entity_id, name_id=name_id, reason=reason,
+                    expire=expire)
                 
                 #to_sign = []
                 if binding.startswith("http://"):
@@ -172,7 +166,7 @@ class Saml2Client(Base):
                 else:
                     srequest = "%s" % request
 
-                relay_state = self._relay_state(request.id)
+                relay_state = self._relay_state(req_id)
 
                 http_info = self.apply_binding(binding, srequest, destination,
                                                relay_state)
@@ -190,7 +184,7 @@ class Saml2Client(Base):
                         logger.info("NOT OK response from %s" % destination)
 
                 else:
-                    self.state[request.id] = {"entity_id": entity_id,
+                    self.state[req_id] = {"entity_id": entity_id,
                                               "operation": "SLO",
                                               "entity_ids": entity_ids,
                                               "name_id": name_id,
@@ -249,12 +243,6 @@ class Saml2Client(Base):
                                   status["reason"], status["not_on_or_after"],
                                   status["sign"])
 
-    # ========================================================================
-    # MUST use SOAP for
-    # AssertionIDRequest, SubjectQuery, AuthnQuery, AttributeQuery or
-    # AuthzDecisionQuery
-    # ========================================================================
-
     def _use_soap(self, destination, query_type, **kwargs):
         _create_func = getattr(self, "create_%s" % query_type)
         _response_func = getattr(self, "parse_%s_response" % query_type)
@@ -264,7 +252,7 @@ class Saml2Client(Base):
         except KeyError:
             response_args = None
 
-        query = _create_func(destination, **kwargs)
+        qid, query = _create_func(destination, **kwargs)
 
         response = self.send_using_soap(query, destination)
 
@@ -427,13 +415,14 @@ class Saml2Client(Base):
         :param sign: Whether the response will be signed or not
         :return: Keyword arguments which can be used to send the response
             what's returned follow different patterns for different bindings.
-            If the binding is BINDIND_SOAP, what is returned looks like this:
-            {
-                "data": <the SOAP enveloped response>
-                "url": "",
-                'headers': [('content-type', 'application/soap+xml')]
-                'method': "POST
-            }
+            If the binding is BINDIND_SOAP, what is returned looks like this::
+
+                {
+                    "data": <the SOAP enveloped response>
+                    "url": "",
+                    'headers': [('content-type', 'application/soap+xml')]
+                    'method': "POST
+                }
         """
         logger.info("logout request: %s" % request)
 

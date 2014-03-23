@@ -193,7 +193,7 @@ def test_filter_attribute_value_assertions_0(AVA):
     })
 
     ava = filter_attribute_value_assertions(AVA[3].copy(),
-                                            p.get_attribute_restriction(""))
+                                            p.get_attribute_restrictions(""))
 
     print(ava)
     assert list(ava.keys()) == ["surName"]
@@ -211,7 +211,7 @@ def test_filter_attribute_value_assertions_1(AVA):
     })
 
     ava = filter_attribute_value_assertions(AVA[0].copy(),
-                                            p.get_attribute_restriction(""))
+                                            p.get_attribute_restrictions(""))
 
     print(ava)
     assert _eq(list(ava.keys()), ["givenName", "surName"])
@@ -219,7 +219,7 @@ def test_filter_attribute_value_assertions_1(AVA):
     assert ava["givenName"] == ["Derek"]
 
     ava = filter_attribute_value_assertions(AVA[1].copy(),
-                                            p.get_attribute_restriction(""))
+                                            p.get_attribute_restrictions(""))
 
     print(ava)
     assert _eq(list(ava.keys()), ["surName"])
@@ -797,4 +797,4 @@ def test_assertion_with_authn_instant():
 
 
 if __name__ == "__main__":
-    test_assertion_with_authn_instant()
+    test_assertion_2()

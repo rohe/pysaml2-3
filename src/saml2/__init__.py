@@ -432,13 +432,12 @@ class SamlBase(ExtensionContainer):
     c_children = {}
     c_attributes = {}
     c_attribute_type = {}
-    #c_attribute_use = {}
-    #c_attribute_required = {}
     c_child_order = []
     c_cardinality = {}
     c_any = None
     c_any_attribute = None
     c_value_type = None
+    c_ns_prefix = None
     
     def _get_all_c_children_with_order(self):
         if len(self.c_child_order) > 0:
@@ -537,6 +536,9 @@ class SamlBase(ExtensionContainer):
             constructing the text representation.
         :return: String representation of the object
         """
+        if not nspair and self.c_ns_prefix:
+            nspair = self.c_ns_prefix
+
         if nspair:
             for prefix, uri in list(nspair.items()):
                 try:
@@ -544,6 +546,8 @@ class SamlBase(ExtensionContainer):
                 except AttributeError:
                     # Backwards compatibility with ET < 1.3
                     ElementTree._namespace_map[uri] = prefix
+                except ValueError:
+                    pass
         
         return ElementTree.tostring(self._to_element_tree(), encoding="UTF-8")
 

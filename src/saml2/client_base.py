@@ -36,11 +36,7 @@ import saml2
 import time
 from saml2.soap import make_soap_enveloped_saml_thingy
 
-try:
-    from urllib.parse import parse_qs
-except ImportError:
-    # Compatibility with Python <= 2.5
-    from cgi import parse_qs
+from urllib.parse import parse_qs
 
 from saml2.s_utils import signature, UnravelError
 from saml2.s_utils import do_attributes
@@ -121,14 +117,16 @@ class Base(Entity):
         self.allow_unsolicited = False
         self.authn_requests_signed = False
         self.want_assertions_signed = False
+        self.want_response_signed = False
         for foo in ["allow_unsolicited", "authn_requests_signed",
-                    "logout_requests_signed", "want_assertions_signed"]:
+                    "logout_requests_signed", "want_assertions_signed",
+                    "want_response_signed"]:
             v = self.config.getattr(foo, "sp")
             if v is True or v == 'true':
                 setattr(self, foo, True)
 
         self.artifact2response = {}
-
+        self.lock = None
     #
     # Private methods
     #
@@ -228,8 +226,12 @@ class Base(Entity):
             of fulfilling the request, to create a new identifier to represent
             the principal.
         :param kwargs: Extra key word arguments
-        :return: <samlp:AuthnRequest> instance
+        :return: tuple of request ID and <samlp:AuthnRequest> instance
         """
+
+        client_crt = None
+        if "client_crt" in kwargs:
+            client_crt = kwargs["client_crt"]
 
         args = {}
         try:
@@ -298,6 +300,16 @@ class Base(Entity):
         except KeyError:
             pass
 
+        if (sign and self.sec.cert_handler.generate_cert()) or \
+                client_crt is not None:
+            with self.lock:
+                self.sec.cert_handler.update_cert(True, client_crt)
+                if client_crt is not None:
+                    sign_prepare = True
+                return self._message(AuthnRequest, destination, message_id,
+                                     consent, extensions, sign, sign_prepare,
+                                     protocol_binding=binding,
+                                     scoping=scoping, **args)
         return self._message(AuthnRequest, destination, message_id, consent,
                              extensions, sign, sign_prepare,
                              protocol_binding=binding,
@@ -328,7 +340,7 @@ class Base(Entity):
         :param extensions: Possible extensions
         :param sign: Whether the query should be signed or not.
         :param sign_prepare: Whether the Signature element should be added.
-        :return: An AttributeQuery instance
+        :return: Tuple of request ID and an AttributeQuery instance
         """
 
         if name_id is None:
@@ -426,15 +438,11 @@ class Base(Entity):
         :param assertion_id_refs:
         :return: One ID ref
         """
-#        id_refs = [AssertionIDRef(text=s) for s in assertion_id_refs]
-#
-#        return self._message(AssertionIDRequest, destination, id, consent,
-#                             extensions, sign, assertion_id_ref=id_refs )
 
         if isinstance(assertion_id_refs, str):
-            return assertion_id_refs
+            return 0, assertion_id_refs
         else:
-            return assertion_id_refs[0]
+            return 0, assertion_id_refs[0]
 
     def create_authn_query(self, subject, destination=None, authn_context=None,
                            session_index="", message_id=0, consent=None,
@@ -493,7 +501,8 @@ class Base(Entity):
 
     # ======== response handling ===========
 
-    def parse_authn_request_response(self, xmlstr, binding, outstanding=None):
+    def parse_authn_request_response(self, xmlstr, binding, outstanding=None,
+                                     outstanding_certs=None):
         """ Deal with an AuthnResponse
 
         :param xmlstr: The reply as a xml string
@@ -513,12 +522,15 @@ class Base(Entity):
         if xmlstr:
             kwargs = {
                 "outstanding_queries": outstanding,
+                "outstanding_certs": outstanding_certs,
                 "allow_unsolicited": self.allow_unsolicited,
                 "want_assertions_signed": self.want_assertions_signed,
+                "want_response_signed": self.want_response_signed,
                 "return_addrs": self.service_urls(),
                 "entity_id": self.config.entityid,
                 "attribute_converters": self.config.attribute_converters,
-                "allow_unknown_attributes": self.config.allow_unknown_attributes,
+                "allow_unknown_attributes":
+                    self.config.allow_unknown_attributes,
             }
             try:
                 resp = self._parse_response(xmlstr, AuthnResponse,
@@ -636,6 +648,10 @@ class Base(Entity):
 
         try:
             authn_req = kwargs["authn_req"]
+            try:
+                req_id = authn_req.id
+            except AttributeError:
+                req_id = 0  # Unknown but since it's SOAP it doesn't matter
         except KeyError:
             try:
                 _binding = kwargs["binding"]
@@ -649,7 +665,7 @@ class Base(Entity):
             # SingleSignOnService
             _, location = self.pick_binding("single_sign_on_service",
                                             [_binding], entity_id=entityid)
-            authn_req = self.create_authn_request(
+            req_id, authn_req = self.create_authn_request(
                 location, service_url_binding=BINDING_PAOS, **kwargs)
 
         # ----------------------------------------
@@ -660,7 +676,7 @@ class Base(Entity):
                                                         [paos_request,
                                                          relay_state])
 
-        return authn_req.id, "%s" % soap_envelope
+        return req_id, "%s" % soap_envelope
 
     def parse_ecp_authn_response(self, txt, outstanding=None):
         rdict = soap.class_instances_from_soap_enveloped_saml_thingies(txt,
@@ -679,7 +695,8 @@ class Base(Entity):
 
         return response, _relay_state
 
-    def can_handle_ecp_response(self, response):
+    @staticmethod
+    def can_handle_ecp_response(response):
         try:
             accept = response.headers["accept"]
         except KeyError:
@@ -697,7 +714,8 @@ class Base(Entity):
     # IDP discovery
     # ----------------------------------------------------------------------
 
-    def create_discovery_service_request(self, url, entity_id, **kwargs):
+    @staticmethod
+    def create_discovery_service_request(url, entity_id, **kwargs):
         """
         Created the HTTP redirect URL needed to send the user to the
         discovery service.
@@ -740,7 +758,8 @@ class Base(Entity):
         params = urlencode(args)
         return "%s?%s" % (url, params)
 
-    def parse_discovery_service_response(self, url="", query="",
+    @staticmethod
+    def parse_discovery_service_response(url="", query="",
                                          returnIDParam="entityID"):
         """
         Deal with the response url from a Discovery Service

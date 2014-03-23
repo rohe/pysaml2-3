@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 import argparse
 import base64
-
+import xmldsig as ds
 import re
 import logging
 import time
@@ -24,6 +24,7 @@ from saml2.authn_context import AuthnBroker
 from saml2.authn_context import PASSWORD
 from saml2.authn_context import UNSPECIFIED
 from saml2.authn_context import authn_context_class_ref
+from saml2.extension import pefim
 from saml2.httputil import Response
 from saml2.httputil import NotFound
 from saml2.httputil import geturl
@@ -38,7 +39,7 @@ from saml2.s_utils import rndstr, exception_trace
 from saml2.s_utils import UnknownPrincipal
 from saml2.s_utils import UnsupportedBinding
 from saml2.s_utils import PolicyError
-from saml2.sigver import verify_redirect_signature
+from saml2.sigver import verify_redirect_signature, cert_from_instance, encrypt_cert_from_item
 
 logger = logging.getLogger("saml2.idp")
 
@@ -120,13 +121,14 @@ class Service(object):
 
     def operation(self, _dict, binding):
         logger.debug("_operation: %s" % _dict)
-        if not _dict:
+        if not _dict or not 'SAMLRequest' in _dict:
             resp = BadRequest('Error parsing request or no request')
             return resp(self.environ, self.start_response)
         else:
             try:
+                _encrypt_cert = encrypt_cert_from_item(_dict["req_info"].message)
                 return self.do(_dict["SAMLRequest"], binding,
-                               _dict["RelayState"])
+                               _dict["RelayState"], encrypt_cert=_encrypt_cert)
             except KeyError:
                 # Can live with no relay state
                 return self.do(_dict["SAMLRequest"], binding)
@@ -151,7 +153,7 @@ class Service(object):
             resp = Response(http_args["data"], headers=http_args["headers"])
         return resp(self.environ, self.start_response)
 
-    def do(self, query, binding, relay_state=""):
+    def do(self, query, binding, relay_state="", encrypt_cert=None):
         pass
 
     def redirect(self):
@@ -277,7 +279,7 @@ class SSO(Service):
 
         return resp_args, _resp
 
-    def do(self, query, binding_in, relay_state=""):
+    def do(self, query, binding_in, relay_state="", encrypt_cert=None):
         try:
             resp_args, _resp = self.verify_request(query, binding_in)
         except UnknownPrincipal as excp:
@@ -331,8 +333,13 @@ class SSO(Service):
             self.req_info = _info["req_info"]
             del IDP.ticket[_key]
         except KeyError:
-            self.req_info = IDP.parse_authn_request(_info["SAMLRequest"],
-                                                    BINDING_HTTP_REDIRECT)
+            try:
+                self.req_info = IDP.parse_authn_request(_info["SAMLRequest"],
+                                                        BINDING_HTTP_REDIRECT)
+            except KeyError:
+                resp = BadRequest("Message signature verification failure")
+                return resp(self.environ, self.start_response)
+
             _req = self.req_info.message
 
             if "SigAlg" in _info and "Signature" in _info:  # Signed request
@@ -528,7 +535,7 @@ def not_found(environ, start_response):
 #    return subject, sp_entity_id
 
 class SLO(Service):
-    def do(self, request, binding, relay_state=""):
+    def do(self, request, binding, relay_state="", encrypt_cert=None):
         logger.info("--- Single Log Out Service ---")
         try:
             _, body = request.split("\n")
@@ -543,8 +550,11 @@ class SLO(Service):
         if msg.name_id:
             lid = IDP.ident.find_local_id(msg.name_id)
             logger.info("local identifier: %s" % lid)
-            del IDP.cache.uid2user[IDP.cache.user2uid[lid]]
-            del IDP.cache.user2uid[lid]
+            if lid in IDP.cache.user2uid:
+                uid = IDP.cache.user2uid[lid]
+                if uid in IDP.cache.uid2user:
+                    del IDP.cache.uid2user[uid]
+                del IDP.cache.user2uid[lid]
             # remove the authentication
             try:
                 IDP.session_db.remove_authn_statements(msg.name_id)
@@ -577,7 +587,7 @@ class SLO(Service):
 
 class NMI(Service):
     
-    def do(self, query, binding, relay_state=""):
+    def do(self, query, binding, relay_state="", encrypt_cert=None):
         logger.info("--- Manage Name ID Service ---")
         req = IDP.parse_manage_name_id_request(query, binding)
         request = req.message
@@ -605,7 +615,7 @@ class NMI(Service):
 
 # Only URI binding
 class AIDR(Service):
-    def do(self, aid, binding, relay_state=""):
+    def do(self, aid, binding, relay_state="", encrypt_cert=None):
         logger.info("--- Assertion ID Service ---")
 
         try:
@@ -634,7 +644,7 @@ class AIDR(Service):
 # ----------------------------------------------------------------------------
 
 class ARS(Service):
-    def do(self, request, binding, relay_state=""):
+    def do(self, request, binding, relay_state="", encrypt_cert=None):
         _req = IDP.parse_artifact_resolve(request, binding)
 
         msg = IDP.create_artifact_response(_req, _req.artifact.text)
@@ -652,7 +662,7 @@ class ARS(Service):
 
 # Only SOAP binding
 class AQS(Service):
-    def do(self, request, binding, relay_state=""):
+    def do(self, request, binding, relay_state="", encrypt_cert=None):
         logger.info("--- Authn Query Service ---")
         _req = IDP.parse_authn_query(request, binding)
         _query = _req.message
@@ -676,7 +686,7 @@ class AQS(Service):
 
 # Only SOAP binding
 class ATTR(Service):
-    def do(self, request, binding, relay_state=""):
+    def do(self, request, binding, relay_state="", encrypt_cert=None):
         logger.info("--- Attribute Query Service ---")
 
         _req = IDP.parse_attribute_query(request, binding)
@@ -709,7 +719,7 @@ class ATTR(Service):
 
 
 class NIM(Service):
-    def do(self, query, binding, relay_state=""):
+    def do(self, query, binding, relay_state="", encrypt_cert=None):
         req = IDP.parse_name_id_mapping_request(query, binding)
         request = req.message
         # Do the necessary stuff
@@ -839,6 +849,19 @@ def metadata(environ, start_response):
         logger.error("An error occured while creating metadata:" + ex.message)
         return not_found(environ, start_response)
 
+def staticfile(environ, start_response):
+    try:
+        path = args.path
+        if path is None or len(path) == 0:
+            path = os.path.dirname(os.path.abspath(__file__))
+        if path[-1] != "/":
+            path += "/"
+        path += environ.get('PATH_INFO', '').lstrip('/')
+        start_response('200 OK', [('Content-Type', "text/xml")])
+        return open(path, 'r').read()
+    except Exception as ex:
+        logger.error("An error occured while creating metadata:" + ex.message)
+        return not_found(environ, start_response)
 
 def application(environ, start_response):
     """
@@ -896,19 +919,40 @@ def application(environ, start_response):
                 return func()
             return callback(environ, start_response, user)
 
+    if re.search(r'static/.*', path) is not None:
+        return staticfile(environ, start_response)
     return not_found(environ, start_response)
 
 # ----------------------------------------------------------------------------
 
+# allow uwsgi or gunicorn mount
+# by moving some initialization out of __name__ == '__main__' section.
+# uwsgi -s 0.0.0.0:8088 --protocol http --callable application --module idp
+
+args = type('Config', (object,), { })
+args.config = 'idp_conf'
+args.mako_root = './'
+args.path = None
+
+import socket
+from idp_user import USERS
+from idp_user import EXTRA
+from mako.lookup import TemplateLookup
+
+AUTHN_BROKER = AuthnBroker()
+AUTHN_BROKER.add(authn_context_class_ref(PASSWORD),
+                 username_password_authn, 10,
+                 "http://%s" % socket.gethostname())
+AUTHN_BROKER.add(authn_context_class_ref(UNSPECIFIED),
+                 "", 0, "http://%s" % socket.gethostname())
+
+IDP = server.Server(args.config, cache=Cache())
+IDP.ticket = {}
 
 # ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    import socket
-    from idp_user import USERS
-    from idp_user import EXTRA
     from wsgiref.simple_server import make_server
-    from mako.lookup import TemplateLookup
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', dest='path', help='Path to configuration file.')

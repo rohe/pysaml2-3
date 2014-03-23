@@ -62,7 +62,15 @@ COMMON_ARGS = [
     "session_storage",
     "entity_category",
     "xmlsec_path",
-    "extension_schemas"
+    "extension_schemas",
+    "cert_handler_extra_class",
+    "generate_cert_func",
+    "generate_cert_info",
+    "verify_encrypt_cert",
+    "tmp_cert_file",
+    "tmp_key_file",
+    "validate_certificate",
+    "extensions"
 ]
 
 SP_ARGS = [
@@ -71,6 +79,7 @@ SP_ARGS = [
     "idp",
     "aa",
     "subject_data",
+    "want_response_signed",
     "want_assertions_signed",
     "authn_requests_signed",
     "name_form",
@@ -80,11 +89,15 @@ SP_ARGS = [
     "allow_unsolicited",
     "ecp",
     "name_id_format",
-    "allow_unknown_attributes"
+    "allow_unknown_attributes",
 ]
 
 AA_IDP_ARGS = [
+    "sign_assertion",
+    "sign_response",
+    "encrypt_assertion",
     "want_authn_requests_signed",
+    "want_authn_requests_only_with_valid_cert",
     "provided_attributes",
     "subject_data",
     "sp",
@@ -169,6 +182,7 @@ class Config(object):
         self.debug = False
         self.key_file = None
         self.cert_file = None
+        self.encryption_type = 'both'
         self.secret = None
         self.accepted_time_diff = None
         self.name = None
@@ -199,6 +213,14 @@ class Config(object):
         self.scope = ""
         self.allow_unknown_attributes = False
         self.extension_schema = {}
+        self.cert_handler_extra_class = None
+        self.verify_encrypt_cert = None
+        self.generate_cert_func = None
+        self.generate_cert_info = None
+        self.tmp_cert_file = None
+        self.tmp_key_file = None
+        self.validate_certificate = None
+        self.extensions = {}
 
     def setattr(self, context, attr, val):
         if context == "":
@@ -316,6 +338,9 @@ class Config(object):
                     self.serves.append(typ)
                 except KeyError:
                     pass
+
+        if "extensions" in cnf:
+            self.do_extensions(cnf["extensions"])
 
         self.load_complex(cnf, metadata_construction=metadata_construction)
         self.context = self.def_context
@@ -459,6 +484,11 @@ class Config(object):
                     return service, binding
 
         return None, None
+
+    def do_extensions(self, extensions):
+        for key, val in extensions.items():
+            self.extensions[key] = val
+
 
 class SPConfig(Config):
     def_context = "sp"

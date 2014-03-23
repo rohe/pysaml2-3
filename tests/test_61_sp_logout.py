@@ -22,8 +22,8 @@ def test_handle_logout_soap():
                                             [BINDING_SOAP],
                                             entity_id=sp.config.entityid)
 
-    request = idp.create_logout_request(destination, idp.config.entityid,
-                                        name_id=name_id)
+    rid, request = idp.create_logout_request(destination, idp.config.entityid,
+                                             name_id=name_id)
     args = idp.apply_binding(BINDING_SOAP, "%s" % request, destination)
 
     # register the user
